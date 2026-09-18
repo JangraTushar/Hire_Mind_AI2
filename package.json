@@ -1,0 +1,26 @@
+{
+  "name": "hire_mind_ai2",
+  "version": "1.0.0",
+  "description": "It's a AI powered Resume checker platform. Where user can use it for one resumec, or upload many files for check them all to gather.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JangraTushar/Hire_Mind_AI2.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/JangraTushar/Hire_Mind_AI2/issues"
+  },
+  "homepage": "https://github.com/JangraTushar/Hire_Mind_AI2#readme",
+  "dependencies": {
+    "@governxone/ai-monitor": "^1.0.4",
+    "dotenv": "^18.0.0",
+    "openai": "^7.18.0"
+  }
+}

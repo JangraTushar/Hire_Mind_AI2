@@ -1,0 +1,786 @@
+openapi: 3.0.3
+
+info:
+  title: HireMind AI - Recruitment Intelligence API
+  description: >
+    OpenAPI specification for HireMind AI, an AI-powered recruitment
+    intelligence and resume analysis system. The application allows
+    users to submit one or multiple resumes for analysis and provides
+    AI-assisted recruitment intelligence.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+paths:
+
+  /:
+    get:
+      summary: Get application information
+      description: Returns basic information about the HireMind AI application.
+      operationId: getApplicationInfo
+      responses:
+        '200':
+          description: Application information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationInfo'
+
+  /health:
+    get:
+      summary: Check application health
+      description: Returns the current health status of the backend application.
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Application is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Application is unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /resume/upload:
+    post:
+      summary: Upload a resume
+      description: >
+        Uploads a single resume document for recruitment analysis.
+        Supported document formats may depend on the backend implementation.
+      operationId: uploadResume
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Resume document to analyze
+      responses:
+        '200':
+          description: Resume uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumeUploadResponse'
+        '400':
+          description: Invalid resume file
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: Resume file is too large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Resume processing failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /resumes/upload:
+    post:
+      summary: Upload multiple resumes
+      description: >
+        Uploads multiple resume documents for batch recruitment analysis.
+      operationId: uploadMultipleResumes
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - files
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  minItems: 1
+                  description: Resume documents to analyze
+      responses:
+        '200':
+          description: Resumes uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchResumeUploadResponse'
+        '400':
+          description: Invalid resume files
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Batch resume processing failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /resume/analyze:
+    post:
+      summary: Analyze a resume
+      description: >
+        Performs AI-powered analysis of a resume and returns
+        recruitment-related information.
+      operationId: analyzeResume
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResumeAnalysisRequest'
+      responses:
+        '200':
+          description: Resume analyzed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumeAnalysisResponse'
+        '400':
+          description: Invalid analysis request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Resume not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Resume analysis failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /resumes/analyze:
+    post:
+      summary: Analyze multiple resumes
+      description: >
+        Performs AI-powered recruitment analysis on multiple resumes.
+      operationId: analyzeMultipleResumes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchAnalysisRequest'
+      responses:
+        '200':
+          description: Batch resume analysis completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchAnalysisResponse'
+        '400':
+          description: Invalid batch analysis request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Batch analysis failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /resume/{resumeId}:
+    get:
+      summary: Get resume information
+      description: Retrieves information associated with a processed resume.
+      operationId: getResume
+      parameters:
+        - name: resumeId
+          in: path
+          required: true
+          description: Unique identifier of the resume
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resume information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resume'
+        '404':
+          description: Resume not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /resume/{resumeId}/analysis:
+    get:
+      summary: Get resume analysis
+      description: Retrieves the analysis generated for a resume.
+      operationId: getResumeAnalysis
+      parameters:
+        - name: resumeId
+          in: path
+          required: true
+          description: Unique identifier of the resume
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resume analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumeAnalysisResponse'
+        '404':
+          description: Resume or analysis not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /job-description/analyze:
+    post:
+      summary: Analyze a job description
+      description: >
+        Extracts recruitment-relevant information from a job description.
+      operationId: analyzeJobDescription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobDescriptionRequest'
+      responses:
+        '200':
+          description: Job description analyzed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobDescriptionResponse'
+        '400':
+          description: Invalid job description
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Job description analysis failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /match:
+    post:
+      summary: Match resume against job description
+      description: >
+        Compares resume information against a job description and
+        returns recruitment matching information.
+      operationId: matchResumeToJob
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchingRequest'
+      responses:
+        '200':
+          description: Resume-job matching completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchingResponse'
+        '400':
+          description: Invalid matching request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Resume not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /candidates:
+    get:
+      summary: Get analyzed candidates
+      description: Returns candidates generated from processed resumes.
+      operationId: getCandidates
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Candidate list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateListResponse'
+        '500':
+          description: Failed to retrieve candidates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /candidates/{candidateId}:
+    get:
+      summary: Get candidate details
+      description: Returns recruitment information for a candidate.
+      operationId: getCandidate
+      parameters:
+        - name: candidateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Candidate details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Candidate'
+        '404':
+          description: Candidate not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ranking:
+    post:
+      summary: Rank candidates
+      description: >
+        Produces a recruitment ranking based on candidate resume
+        analysis and the supplied job requirements.
+      operationId: rankCandidates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RankingRequest'
+      responses:
+        '200':
+          description: Candidate ranking generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RankingResponse'
+        '400':
+          description: Invalid ranking request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Ranking operation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+
+  schemas:
+
+    ApplicationInfo:
+      type: object
+      required:
+        - name
+        - description
+        - version
+      properties:
+        name:
+          type: string
+          example: HireMind AI
+        description:
+          type: string
+          example: AI-powered recruitment intelligence and resume analysis system
+        version:
+          type: string
+          example: 1.0.0
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - healthy
+            - degraded
+            - unavailable
+          example: healthy
+        service:
+          type: string
+          example: HireMind AI Backend
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          example: INVALID_REQUEST
+        message:
+          type: string
+          example: The supplied request is invalid.
+
+    ResumeUploadResponse:
+      type: object
+      required:
+        - success
+        - resumeId
+      properties:
+        success:
+          type: boolean
+          example: true
+        resumeId:
+          type: string
+          example: resume_001
+        filename:
+          type: string
+          example: candidate_resume.pdf
+        message:
+          type: string
+          example: Resume uploaded successfully.
+
+    BatchResumeUploadResponse:
+      type: object
+      required:
+        - success
+        - resumes
+      properties:
+        success:
+          type: boolean
+          example: true
+        resumes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResumeUploadResponse'
+
+    Resume:
+      type: object
+      required:
+        - id
+        - filename
+      properties:
+        id:
+          type: string
+          example: resume_001
+        filename:
+          type: string
+          example: candidate_resume.pdf
+        text:
+          type: string
+          example: Candidate resume extracted text
+        skills:
+          type: array
+          items:
+            type: string
+          example:
+            - Python
+            - Machine Learning
+            - SQL
+        education:
+          type: array
+          items:
+            type: string
+        experience:
+          type: array
+          items:
+            type: string
+        certifications:
+          type: array
+          items:
+            type: string
+
+    ResumeAnalysisRequest:
+      type: object
+      required:
+        - resumeId
+      properties:
+        resumeId:
+          type: string
+          example: resume_001
+        jobDescription:
+          type: string
+          example: >
+            Looking for a machine learning engineer with Python,
+            machine learning and data science experience.
+
+    ResumeAnalysisResponse:
+      type: object
+      required:
+        - resumeId
+        - skills
+      properties:
+        resumeId:
+          type: string
+          example: resume_001
+        skills:
+          type: array
+          items:
+            type: string
+          example:
+            - Python
+            - Machine Learning
+            - SQL
+        experience:
+          type: array
+          items:
+            type: string
+        education:
+          type: array
+          items:
+            type: string
+        strengths:
+          type: array
+          items:
+            type: string
+        gaps:
+          type: array
+          items:
+            type: string
+        summary:
+          type: string
+
+    BatchAnalysisRequest:
+      type: object
+      required:
+        - resumeIds
+      properties:
+        resumeIds:
+          type: array
+          minItems: 1
+          items:
+            type: string
+          example:
+            - resume_001
+            - resume_002
+
+        jobDescription:
+          type: string
+
+    BatchAnalysisResponse:
+      type: object
+      required:
+        - results
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResumeAnalysisResponse'
+
+    JobDescriptionRequest:
+      type: object
+      required:
+        - jobDescription
+      properties:
+        jobDescription:
+          type: string
+          minLength: 1
+          example: >
+            We are looking for a Data Scientist with Python,
+            machine learning, statistics and SQL experience.
+
+    JobDescriptionResponse:
+      type: object
+      required:
+        - skills
+      properties:
+        skills:
+          type: array
+          items:
+            type: string
+          example:
+            - Python
+            - Machine Learning
+            - Statistics
+            - SQL
+        responsibilities:
+          type: array
+          items:
+            type: string
+        qualifications:
+          type: array
+          items:
+            type: string
+
+    MatchingRequest:
+      type: object
+      required:
+        - resumeId
+        - jobDescription
+      properties:
+        resumeId:
+          type: string
+          example: resume_001
+        jobDescription:
+          type: string
+          minLength: 1
+
+    MatchingResponse:
+      type: object
+      required:
+        - resumeId
+        - matchScore
+      properties:
+        resumeId:
+          type: string
+          example: resume_001
+        matchScore:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 82.5
+        matchedSkills:
+          type: array
+          items:
+            type: string
+        missingSkills:
+          type: array
+          items:
+            type: string
+        explanation:
+          type: string
+
+    Candidate:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          example: candidate_001
+        name:
+          type: string
+          example: Candidate Name
+        resumeId:
+          type: string
+          example: resume_001
+        skills:
+          type: array
+          items:
+            type: string
+        experience:
+          type: array
+          items:
+            type: string
+        education:
+          type: array
+          items:
+            type: string
+        matchScore:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+
+    CandidateListResponse:
+      type: object
+      required:
+        - candidates
+        - total
+      properties:
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/Candidate'
+        total:
+          type: integer
+          minimum: 0
+          example: 10
+
+    RankingRequest:
+      type: object
+      required:
+        - candidateIds
+        - jobDescription
+      properties:
+        candidateIds:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        jobDescription:
+          type: string
+          minLength: 1
+
+    RankingResponse:
+      type: object
+      required:
+        - candidates
+      properties:
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/RankedCandidate'
+
+    RankedCandidate:
+      type: object
+      required:
+        - candidateId
+        - score
+      properties:
+        candidateId:
+          type: string
+          example: candidate_001
+        score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 85.0
+        matchedSkills:
+          type: array
+          items:
+            type: string
+        missingSkills:
+          type: array
+          items:
+            type: string
+        explanation:
+          type: string
